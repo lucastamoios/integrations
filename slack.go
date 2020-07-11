@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/nleof/goyesql"
+	"github.com/slack-go/slack"
 )
 
 type Integration struct {
@@ -61,29 +61,8 @@ func getTogglCurrentTimeEntry(token string) (*CurrentTimeEntry, error) {
 }
 
 func setSlackStatus(currentTE CurrentTimeEntry, token string) error {
-	url := "https://slack.com/api/users.profile.set"
-	auth := fmt.Sprintf("Basic %s", token)
-	slackProfile := SlackProfile{currentTE.Description, ":stuck_out_tongue_winking_eye:", 1}
-	profilePayload := ProfilePayload{slackProfile}
-	payload_, err := json.Marshal(profilePayload)
-	if err != nil {
-		return nil
-	}
-	payload := strings.NewReader(string(payload_))
-	req, err := http.NewRequest("POST", url, payload)
-	if err != nil {
-		return nil
-	}
-	req.Header.Add("content-type", "application/json; charset=utf-8")
-	req.Header.Add("authorization", auth)
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil
-	}
-	defer res.Body.Close()
-	_, err = ioutil.ReadAll(res.Body)
-	return err
+	api := slack.New(token)
+	return api.SetUserCustomStatus(currentTE.Description, ":stuck_out_tongue_winking_eye:", 10)
 }
 
 func updateUserSlackStatus(togglToken, slackToken string) error {
