@@ -19,3 +19,10 @@ After that you should insert your credentials to the database:
 ```sql
 INSERT INTO integrations (toggl_credentials, service_credentials, created_at) VALUES ('toggl-credentials-encoded-base64', 'xoxp-slack-credentials', NOW());
 ```
+
+Integration Abstraction
+---
+
+An integration is a two-way data pipeline between Toggl and an external service.
+Each integration can have multiple features which tell what data should be exchanged.
+
