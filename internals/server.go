@@ -18,7 +18,7 @@ func main() {
 		log.Fatal("sqlx.Open error: ", err)
 	}
 
-	queries, err := goyesql.ParseFile("db/get_integrations.sql")
+	queries, err := goyesql.ParseFile("db/queries.sql")
 	if err != nil {
 		log.Fatal("goyesql.ParseFile error: ", err)
 	}
@@ -29,13 +29,19 @@ func main() {
 		if err != nil {
 			log.Fatal("db.Exec error: ", err)
 		}
-
 		for _, integration := range integrations {
-			slack.UpdateUserSlackStatus(integration.TogglCredentials, integration.ServiceCredentials)
+			var emojiRules []slack.EmojiRule
+			err = db.Select(&emojiRules, queries["get-emoji-rules"], integration.IntegrationID)
 			if err != nil {
-				panic(fmt.Errorf("failed to set slack status for integratin %d with error: %s", integration.ID, err.Error()))
+				log.Fatal("db.Exec error: ", err)
+			}
+
+			slack.UpdateStatus(integration, emojiRules)
+			if err != nil {
+				panic(fmt.Errorf("failed to set slack status for integratin %d with error: %s", integration.IntegrationID, err.Error()))
 			}
 		}
 		time.Sleep(1*time.Minute)
+		fmt.Println("Updated status")
 	}
 }
