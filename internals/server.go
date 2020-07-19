@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/lucastamoios/integrations/internals/storage"
 	"log"
 	"sync"
 
@@ -17,9 +18,10 @@ func main() {
 	if err != nil {
 		log.Fatal("sqlx.Open error: ", err)
 	}
+	cache := storage.NewHashStorage()
 	wg.Add(2) // Integration + server
 	go slack.IntegrationRunner(db, wg)
-	go http.ServerRunner(db, wg)
+	go http.ServerRunner(db, cache, wg)
 	wg.Wait()
 
 }

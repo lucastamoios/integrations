@@ -6,11 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lucastamoios/integrations/internals/slack"
 	"github.com/nleof/goyesql"
+
+	"github.com/lucastamoios/integrations/internals/slack"
+	"github.com/lucastamoios/integrations/internals/storage"
 )
 
 type Handler struct {
+	cache storage.HashStorage
 	db *sqlx.DB
 }
 

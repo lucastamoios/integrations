@@ -1,17 +1,26 @@
 package http
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/lucastamoios/integrations/internals/toggl"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/lucastamoios/integrations/internals/storage"
+	"github.com/lucastamoios/integrations/internals/toggl"
 )
 
-func TogglAuthenticationRequired() gin.HandlerFunc {
+// TogglAuthenticationRequired is a middleware for authentication that uses the Toggl API to
+// check if the user is valid or not
+func TogglAuthenticationRequired(cache storage.HashStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Basic ")
+		// If the token is already in the cache it is not necessary to check again
+		if _, ok := cache.Get(token); ok {
+			c.Next()
+			return
+		}
 
-		// TODO we probably want to cache this in Redis or, simpler, in some Redis-like structure
 		client := toggl.New(token)
 		_, err := client.GetUser()
 		if err == toggl.ErrorUnauthorized || err == toggl.ErrorForbidden {
@@ -19,7 +28,9 @@ func TogglAuthenticationRequired() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// TODO store the token in the context
+
+		cache.Set(token, "ok")  // TODO: set with expiration
+		c.Set("toggl_token", token)
 		c.Next()
 	}
 }
