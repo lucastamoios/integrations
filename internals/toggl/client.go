@@ -11,6 +11,20 @@ import (
 // This should change according to environment
 const APIURL = "https://toggl.com/"
 
+type TogglAPIError struct {
+	status int
+	message string
+	endpoint string
+}
+
+func (t TogglAPIError) Error() string {
+	return fmt.Sprintf("endpoint %d returned a status %d: %s", t.endpoint, t.status, t.message)
+}
+
+var ErrorTimeEntryNotFound = TogglAPIError{404, "not found", APIURL}
+var ErrorUnauthorized = TogglAPIError{401, "unauthorized", APIURL}
+var ErrorForbidden = TogglAPIError{403, "forbidden", APIURL}
+
 type Client struct {
 	apiURL url.URL
 	token string
@@ -26,6 +40,12 @@ type TimeEntry struct {
 type Project struct {
 	ProjectID int64 `json:"id"`
 	Name string `json:"name"`
+}
+
+type TogglUser struct {
+	UserID int64 `json:"id"`
+	Name string `json:"fullname"`
+	Mail string `json:"email"`
 }
 
 func New(token string) *Client {
@@ -66,6 +86,21 @@ func (c *Client) GetProject(workspaceID, projectID int64) (*Project, error) {
 	return &project, nil
 }
 
+func (c *Client) GetUser() (*TogglUser, error) {
+	c.apiURL.Path = "api/v9/me"
+	body, err := c.makeRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	var user TogglUser
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (c *Client) makeRequest() ([]byte, error) {
 	auth := fmt.Sprintf("Basic %s", c.token)
 	req, err := http.NewRequest("GET", c.apiURL.String(), nil)
@@ -77,10 +112,20 @@ func (c *Client) makeRequest() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode == http.StatusUnauthorized {
+		return nil, ErrorUnauthorized
+	}
+	if res.StatusCode == http.StatusForbidden {
+		return nil, ErrorForbidden
+	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
+	}
+	// Some Toggl endpoints return this string instead of a 404 status
+	if string(body) == "null" {
+		return nil, ErrorTimeEntryNotFound
 	}
 	return body, nil
 }

@@ -1,7 +1,13 @@
 package slack
 
 import (
+	"errors"
+	"fmt"
+	"github.com/jmoiron/sqlx"
+	"github.com/nleof/goyesql"
+	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lucastamoios/integrations/internals/toggl"
@@ -22,7 +28,39 @@ type EmojiRule struct {
 	Emoji string `db:"emoji"`
 }
 
-func getEmojiForProject(rules []EmojiRule, projectName string) (string){
+func IntegrationRunner(db *sqlx.DB, wg sync.WaitGroup) {
+	queries, err := goyesql.ParseFile("db/queries.sql")
+	if err != nil {
+		log.Fatal("goyesql.ParseFile error: ", err)
+	}
+
+	for {
+		var integrations []Integration
+		err = db.Select(&integrations, queries["get-integrations"])
+		if err != nil {
+			log.Fatal("db.Exec error: ", err)
+			break
+		}
+		for _, integration := range integrations {
+			var emojiRules []EmojiRule
+			err = db.Select(&emojiRules, queries["get-emoji-rules"], integration.IntegrationID)
+			if err != nil {
+				log.Fatal("db.Exec error: ", err)
+				break
+			}
+
+			err = updateStatus(integration, emojiRules)
+			if err != nil && !errors.Is(err, toggl.TogglAPIError{}) {
+				log.Println(fmt.Errorf("failed to set slack status for integratin %d with error: %s", integration.IntegrationID, err.Error()))
+			}
+		}
+		time.Sleep(1 * time.Minute)
+		fmt.Println("Updated status")
+	}
+	wg.Done()
+}
+
+func getEmojiForProject(rules []EmojiRule, projectName string) string {
 	for _, rule := range rules {
 		if strings.ToLower(rule.ProjectName) == strings.ToLower(projectName) {
 			return rule.Emoji
@@ -31,10 +69,18 @@ func getEmojiForProject(rules []EmojiRule, projectName string) (string){
 	return ""
 }
 
-func UpdateStatus(integration Integration, rules []EmojiRule) error {
+func updateStatus(integration Integration, rules []EmojiRule) error {
+	api := slack.New(integration.ServiceCredentials)
 	client := toggl.New(integration.TogglCredentials)
+
 	currentTE, err := client.GetCurrentTimeEntry()
-	if err != nil || currentTE == nil {
+	if errors.Is(err, toggl.ErrorTimeEntryNotFound) {
+		err = api.SetUserCustomStatus("", "", 0)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if err != nil {
 		return err
 	}
 
@@ -44,7 +90,6 @@ func UpdateStatus(integration Integration, rules []EmojiRule) error {
 	}
 	emoji := getEmojiForProject(rules, project.Name)
 
-	api := slack.New(integration.ServiceCredentials)
 	err = api.SetUserCustomStatus(currentTE.Description, emoji, 0)
 	if err != nil {
 		return err
