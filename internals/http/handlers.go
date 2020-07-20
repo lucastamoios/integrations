@@ -12,16 +12,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
-	"github.com/nleof/goyesql"
-
 	"github.com/lucastamoios/integrations/internals/slack"
 	"github.com/lucastamoios/integrations/internals/storage"
 )
 
 type Handler struct {
 	cache storage.HashStorage
-	db *sqlx.DB
+	db storage.Database
 }
 
 func (h *Handler) ListIntegrations(c *gin.Context) {
@@ -29,12 +26,8 @@ func (h *Handler) ListIntegrations(c *gin.Context) {
 	if !ok {
 		log.Fatal("Token not found for request")
 	}
-	queries, err := goyesql.ParseFile("db/queries.sql")
-	if err != nil {
-		log.Fatal("goyesql.ParseFile error: ", err)
-	}
 	var integrations []slack.Integration
-	err = h.db.Select(&integrations, queries["get-integrations-for-user"], token)
+	err := h.db.Select(&integrations, "get-integrations-for-user", token)
 	if err != nil {
 		c.JSON(
 			http.StatusBadGateway,
@@ -109,12 +102,8 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 		return
 	}
 
-	queries, err := goyesql.ParseFile("db/queries.sql")
-	if err != nil {
-		log.Fatal("goyesql.ParseFile error: ", err)
-	}
 	log.Println("starting query")
-	_, err = h.db.Exec(queries["create-integration"], "toggl-slack-integration", token, unpacked["access_token"])
+	_, err = h.db.Exec("create-integration", "toggl-slack-integration", token, unpacked["access_token"])
 	if err != nil {
 		log.Fatal("sql error: ", err)
 	}

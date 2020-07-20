@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
-
 	"github.com/lucastamoios/integrations/internals/storage"
 )
 
 // router links each route to some handler
-func router(db *sqlx.DB, cache storage.HashStorage) http.Handler {
+func router(db storage.Database, cache storage.HashStorage) http.Handler {
 	handler := &Handler{cache, db}
 	e := gin.New()
 	e.Use(gin.Recovery())
@@ -32,7 +30,7 @@ func router(db *sqlx.DB, cache storage.HashStorage) http.Handler {
 	return e
 }
 
-func ServerRunner(db *sqlx.DB, cache storage.HashStorage, wg sync.WaitGroup) {
+func ServerRunner(db storage.Database, cache storage.HashStorage, wg sync.WaitGroup) {
 	server := &http.Server{
 		Addr:         ":8080",
 		Handler:      router(db, cache),

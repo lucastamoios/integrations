@@ -3,8 +3,7 @@ package slack
 import (
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	"github.com/nleof/goyesql"
+	"github.com/lucastamoios/integrations/internals/storage"
 	"log"
 	"strings"
 	"sync"
@@ -28,24 +27,19 @@ type EmojiRule struct {
 	Emoji string `db:"emoji"`
 }
 
-func IntegrationRunner(db *sqlx.DB, wg sync.WaitGroup) {
-	queries, err := goyesql.ParseFile("db/queries.sql")
-	if err != nil {
-		log.Fatal("goyesql.ParseFile error: ", err)
-	}
-
+func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
 	for {
 		var integrations []Integration
-		err = db.Select(&integrations, queries["get-integrations"])
+		err := db.Select(&integrations, "get-integrations")
 		if err != nil {
-			log.Fatal("db.Exec error: ", err)
+			log.Fatal("Database error: ", err)
 			break
 		}
 		for _, integration := range integrations {
 			var emojiRules []EmojiRule
-			err = db.Select(&emojiRules, queries["get-emoji-rules"], integration.IntegrationID)
+			err = db.Select(&emojiRules, "get-emoji-rules", integration.IntegrationID)
 			if err != nil {
-				log.Fatal("db.Exec error: ", err)
+				log.Fatal("Database error: ", err)
 				break
 			}
 
