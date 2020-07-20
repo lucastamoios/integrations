@@ -54,7 +54,7 @@ func IntegrationRunner(db *sqlx.DB, wg sync.WaitGroup) {
 				log.Println(fmt.Errorf("failed to set slack status for integratin %d with error: %s", integration.IntegrationID, err.Error()))
 			}
 		}
-		time.Sleep(1 * time.Minute)
+		time.Sleep(5 * time.Minute)
 		fmt.Println("Updated status")
 	}
 	wg.Done()

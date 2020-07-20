@@ -14,13 +14,21 @@ import (
 
 // router links each route to some handler
 func router(db *sqlx.DB, cache storage.HashStorage) http.Handler {
+	handler := &Handler{cache, db}
 	e := gin.New()
 	e.Use(gin.Recovery())
-	// This authentication searches if the user is valid in the Toggl API
-	e.Use(TogglAuthenticationRequired(cache))
-	handler := &Handler{cache, db}
+	authenticated := e.Group("integrations/api/v1/slack")
+	public := e.Group("integrations/api/v1/slack")
 
-	e.GET("integrations/api/v1/slack", handler.ListIntegrations)
+	// This authentication searches if the user is valid in the Toggl API
+	authenticated.Use(TogglAuthenticationRequired(cache))
+
+	authenticated.GET("/", handler.ListIntegrations)
+	authenticated.GET("/setup", handler.SetupSlackIntegration)
+	// This is called as callback by external services, so it will not authenticate
+	//the user as we don't use any kind of session
+	public.GET("/callback", handler.CallbackSetupSlackIntegration)
+
 	return e
 }
 

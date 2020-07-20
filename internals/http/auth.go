@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -22,15 +23,17 @@ func TogglAuthenticationRequired(cache storage.HashStorage) gin.HandlerFunc {
 		}
 
 		client := toggl.New(token)
-		_, err := client.GetUser()
+		user, err := client.GetUser()
 		if err == toggl.ErrorUnauthorized || err == toggl.ErrorForbidden {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user token is not valid in Toggl API"})
 			c.Abort()
 			return
 		}
 
-		cache.Set(token, "ok")  // TODO: set with expiration
+		// Saving UserID to use it as reference
+		cache.Set(token, strconv.FormatInt(user.UserID, 10))  // TODO: set with expiration
 		c.Set("toggl_token", token)
+		c.Set("toggl_user_id", user.UserID)
 		c.Next()
 	}
 }

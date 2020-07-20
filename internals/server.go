@@ -23,7 +23,6 @@ func main() {
 	go slack.IntegrationRunner(db, wg)
 	go http.ServerRunner(db, cache, wg)
 	wg.Wait()
-
 }
 
 

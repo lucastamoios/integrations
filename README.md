@@ -2,8 +2,10 @@ Slack Integration for Toggl
 ===========================
 
 Functionalities:
-- Update status with what you are working with
-- (next feature) Message to remember that you are working after a while in slack for some time without tracking. This is interesting as a way to not forget to track time but also as a way to keep a healthy relation with work.
+- [x] Update status with what you are working with
+- [ ] Set "do not disturb" for given projects
+- [ ] (next feature) Message to remember that you are working after a while in slack for some time without tracking. This is interesting as a way to not forget to track time but also as a way to keep a healthy relation with work.
+- [ ] Send time tracking command via slack
 
 Running the code
 ----------------
