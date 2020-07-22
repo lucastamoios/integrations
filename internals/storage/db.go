@@ -13,7 +13,7 @@ type Database interface {
 }
 
 type Postgres struct {
-	DB *sqlx.DB
+	DB      *sqlx.DB
 	queries goyesql.Queries
 }
 
@@ -30,11 +30,11 @@ func NewPostgresDatabase(dbName, queryFile string) (*Postgres, error) {
 	return &Postgres{db, queries}, nil
 }
 
-func (db *Postgres) Select(dest interface{}, query goyesql.Tag, args ...interface{}) error{
+func (db *Postgres) Select(dest interface{}, query goyesql.Tag, args ...interface{}) error {
 	return db.DB.Select(dest, db.queries[query], args)
 }
 
-func (db *Postgres) Exec(query goyesql.Tag, args ...interface{}) (int64, error){
+func (db *Postgres) Exec(query goyesql.Tag, args ...interface{}) (int64, error) {
 	r, err := db.DB.Exec(db.queries[query], args)
 	if err != nil {
 		return 0, err

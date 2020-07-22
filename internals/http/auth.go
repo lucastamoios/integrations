@@ -31,7 +31,7 @@ func TogglAuthenticationRequired(cache storage.HashStorage) gin.HandlerFunc {
 		}
 
 		// Saving UserID to use it as reference
-		cache.Set(token, strconv.FormatInt(user.UserID, 10))  // TODO: set with expiration
+		cache.Set(token, strconv.FormatInt(user.UserID, 10)) // TODO: set with expiration
 		c.Set("toggl_token", token)
 		c.Set("toggl_user_id", user.UserID)
 		c.Next()

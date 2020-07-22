@@ -21,5 +21,3 @@ func main() {
 	go http.ServerRunner(db, cache, wg)
 	wg.Wait()
 }
-
-
