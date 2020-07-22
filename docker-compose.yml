@@ -1,0 +1,20 @@
+---
+version: "3.0"
+services:
+  app:
+    image: golang:1.13-alpine
+    command: go run /app/internals/server.go
+    environment:
+      POSTGRES_CONN: dbname=toggl_integrations host=db sslmode=disable user=postgres
+    volumes:
+      - .:/app
+      - ./data/mod:/go/pkg/mod
+    working_dir: /app
+  db:
+    image: postgres:9.6
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
