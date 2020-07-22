@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	db, err := storage.NewPostgresDatabase("toggl_integrations", "db/queries.sql")
+	db, err := storage.NewPostgresDatabase("db/queries.sql")
 	if err != nil {
 		log.Fatal("NewPostgresDatabase error: ", err)
 	}

@@ -1,7 +1,8 @@
 package storage
 
 import (
-	"fmt"
+	"os"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/nleof/goyesql"
@@ -17,8 +18,11 @@ type Postgres struct {
 	queries goyesql.Queries
 }
 
-func NewPostgresDatabase(dbName, queryFile string) (*Postgres, error) {
-	dbSource := fmt.Sprintf("dbname=%s sslmode=disable", dbName)
+func NewPostgresDatabase(queryFile string) (*Postgres, error) {
+	dbSource := os.Getenv("POSTGRES_CONN")
+	if dbSource == "" {
+		dbSource = "dbname=toggl_integrations sslmode=disable"
+	}
 	db, err := sqlx.Open("postgres", dbSource)
 	if err != nil {
 		return nil, err
