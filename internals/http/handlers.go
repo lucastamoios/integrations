@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lucastamoios/integrations/internals/slack"
@@ -21,10 +22,12 @@ type Handler struct {
 	db storage.Database
 }
 
+var slackCallback = "http://localhost:8080/integrations/api/v1/slack/callback"
+
 func (h *Handler) ListIntegrations(c *gin.Context) {
 	token, ok := c.Get("toggl_token")
 	if !ok {
-		log.Fatal("Token not found for request")
+		log.Fatal("token not found for request")
 	}
 	var integrations []slack.Integration
 	err := h.db.Select(&integrations, "get-integrations-for-user", token)
@@ -32,7 +35,7 @@ func (h *Handler) ListIntegrations(c *gin.Context) {
 		c.JSON(
 			http.StatusBadGateway,
 			gin.H{
-				"error": "Some problem happened",
+				"error": "some problem happened loading the integrations",
 			},
 		)
 		return
@@ -49,25 +52,24 @@ func (h *Handler) SetupSlackIntegration(c *gin.Context) {
 	temp := make([]byte, 20)
 	_, err := rand.Read(temp)
 	if err != nil {
-		// return err
-		log.Fatal("")
+		log.Fatal("failed generating state")
+		c.Abort()
+		return
 	}
 	state := base64.URLEncoding.EncodeToString(temp)
-	// TODO set expiry
 	token := strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Basic ")
+
 	h.cache.Set(state, token)
+	h.cache.Expire(state, 10*time.Minute)
 
 	clientID := os.Getenv("CLIENT_ID")
 	scope := "users.profile:write"
-	// TODO URL should be parameterized
-	redirectURL := "http://localhost:8080/integrations/api/v1/slack/callback"
 	url := fmt.Sprintf("https://slack.com/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s&state=%s",
 		clientID,
 		scope,
-		redirectURL,
+		slackCallback,
 		state)
-	// TODO redirect user to url
-	c.JSON(http.StatusOK, gin.H{"url": url})
+	c.Redirect(http.StatusFound, url)
 }
 
 
@@ -78,7 +80,7 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 	// If user already have this state we understand as he is the right user
 	token, ok := h.cache.Get(state)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "saved state is different from what was passed"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "saved state is different from what was passed or it expired"})
 		c.Abort()
 		return
 	}
@@ -86,13 +88,11 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 
 	clientID := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
-	// TODO URL should be parameterized
-	redirectURL := "http://localhost:8080/integrations/api/v1/slack/callback"
 
 	url := fmt.Sprintf("https://slack.com/api/oauth.access?client_id=%s&client_secret=%s&redirect_uri=%s&code=%s",
 		clientID,
 		clientSecret,
-		redirectURL,
+		slackCallback,
 		code)
 	unpacked, err := makeExternalRequest(url)
 	if err != nil {

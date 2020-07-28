@@ -1,16 +1,20 @@
 package storage
 
 import (
-	"log"
 	"sync"
+	"time"
 )
 
 type HashStorage interface {
 	Set(key, value string)
 	Get(key string) (string, bool)
 	Del(key string)
-	Pop(key string) (string, bool)  // Same as Get, but also removes from storage
-	Log(s string)
+	Expire(key string, seconds time.Duration)
+}
+
+type HashValue struct {
+	Value string
+	ExpiresAt *time.Time
 }
 
 type MapStorage struct {
@@ -22,31 +26,33 @@ func NewHashStorage() *MapStorage{
 }
 
 func (ms *MapStorage) Set(key, value string) {
-	ms.storage.Store(key, value)
+	v := HashValue{value, nil}
+	ms.storage.Store(key, v)
 }
 
 func (ms *MapStorage) Get(key string) (string, bool) {
+	ms.checkExpiration(key)
 	value, ok := ms.storage.Load(key)
 	if !ok {
 		return "", false
 	}
-	return value.(string), ok
-}
-
-func (ms *MapStorage) Pop(key string) (string, bool) {
-	value, ok := ms.storage.Load(key)
-	if !ok {
-		return "", false
-	}
-	ms.storage.Delete(key)
-	return value.(string), ok
+	return value.(HashValue).Value, ok
 }
 
 func (ms *MapStorage) Del(key string) {
 	ms.storage.Delete(key)
 }
 
+func (ms *MapStorage) Expire(key string, duration time.Duration) {
+	if value, ok := ms.storage.Load(key); ok {
+		v := value.(HashValue).Value
+		e := time.Now().Add(duration)
+		ms.storage.Store(key, HashValue{v, &e})
+	}
+}
 
-func (ms *MapStorage) Log(s string) {
-	log.Printf("%s: %v\n", s, ms.storage)
+func (ms *MapStorage) checkExpiration (key string) {
+	if value, ok := ms.storage.Load(key); ok && value.(HashValue).ExpiresAt.Before(time.Now()){
+		ms.storage.Delete(key)
+	}
 }
