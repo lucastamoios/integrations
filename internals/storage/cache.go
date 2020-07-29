@@ -21,7 +21,7 @@ type MapStorage struct {
 	storage sync.Map
 }
 
-func NewHashStorage() *MapStorage{
+func NewHashStorage() *MapStorage {
 	return &MapStorage{sync.Map{}}
 }
 
@@ -56,3 +56,4 @@ func (ms *MapStorage) checkExpiration (key string) {
 		ms.storage.Delete(key)
 	}
 }
+

@@ -19,7 +19,7 @@ import (
 
 type Handler struct {
 	cache storage.HashStorage
-	db storage.Database
+	db    storage.Database
 }
 
 var slackCallback = "http://localhost:8080/integrations/api/v1/slack/callback"
@@ -71,7 +71,6 @@ func (h *Handler) SetupSlackIntegration(c *gin.Context) {
 		state)
 	c.Redirect(http.StatusFound, url)
 }
-
 
 func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 	code := c.Query("code")

@@ -12,8 +12,8 @@ import (
 const APIURL = "https://toggl.com/"
 
 type TogglAPIError struct {
-	status int
-	message string
+	status   int
+	message  string
 	endpoint string
 }
 
@@ -27,25 +27,25 @@ var ErrorForbidden = TogglAPIError{403, "forbidden", APIURL}
 
 type Client struct {
 	apiURL url.URL
-	token string
+	token  string
 }
 
 type TimeEntry struct {
-	ID int `json:"id"`
-	WorkspaceID int64 `json:"workspace_id"`
-	ProjectID int64 `json:"project_id"`
+	ID          int    `json:"id"`
+	WorkspaceID int64  `json:"workspace_id"`
+	ProjectID   int64  `json:"project_id"`
 	Description string `json:"description"`
 }
 
 type Project struct {
-	ProjectID int64 `json:"id"`
-	Name string `json:"name"`
+	ProjectID int64  `json:"id"`
+	Name      string `json:"name"`
 }
 
 type TogglUser struct {
-	UserID int64 `json:"id"`
-	Name string `json:"fullname"`
-	Mail string `json:"email"`
+	UserID int64  `json:"id"`
+	Name   string `json:"fullname"`
+	Mail   string `json:"email"`
 }
 
 func New(token string) *Client {
