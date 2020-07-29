@@ -18,7 +18,7 @@ import (
 
 type Handler struct {
 	cache storage.HashStorage
-	db storage.Database
+	db    storage.Database
 }
 
 func (h *Handler) ListIntegrations(c *gin.Context) {
@@ -69,7 +69,6 @@ func (h *Handler) SetupSlackIntegration(c *gin.Context) {
 	// TODO redirect user to url
 	c.JSON(http.StatusOK, gin.H{"url": url})
 }
-
 
 func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 	code := c.Query("code")

@@ -15,16 +15,16 @@ import (
 )
 
 type Integration struct {
-	IntegrationID int64 `json:"integration_id" db:"integration_id"`
-	TogglCredentials string `json:"toggl_credentials" db:"toggl_credentials"`
-	ServiceCredentials string `json:"service_credentials" db:"service_credentials"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	DeletedAt *time.Time `json:"deleted_at" db:"deleted_at"`
+	IntegrationID      int64      `json:"integration_id" db:"integration_id"`
+	TogglCredentials   string     `json:"toggl_credentials" db:"toggl_credentials"`
+	ServiceCredentials string     `json:"service_credentials" db:"service_credentials"`
+	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
+	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
 type EmojiRule struct {
 	ProjectName string `db:"project"`
-	Emoji string `db:"emoji"`
+	Emoji       string `db:"emoji"`
 }
 
 func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
