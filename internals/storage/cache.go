@@ -6,14 +6,14 @@ import (
 )
 
 type HashStorage interface {
-	Set(key, value string)
-	Get(key string) (string, bool)
+	Set(key, value interface{})
+	Get(key string) (interface{}, bool)
 	Del(key string)
 	Expire(key string, seconds time.Duration)
 }
 
 type HashValue struct {
-	Value string
+	Value     interface{}
 	ExpiresAt *time.Time
 }
 
@@ -25,12 +25,12 @@ func NewHashStorage() *MapStorage {
 	return &MapStorage{sync.Map{}}
 }
 
-func (ms *MapStorage) Set(key, value string) {
+func (ms *MapStorage) Set(key, value interface{}) {
 	v := HashValue{value, nil}
 	ms.storage.Store(key, v)
 }
 
-func (ms *MapStorage) Get(key string) (string, bool) {
+func (ms *MapStorage) Get(key string) (interface{}, bool) {
 	ms.checkExpiration(key)
 	value, ok := ms.storage.Load(key)
 	if !ok {
@@ -51,9 +51,8 @@ func (ms *MapStorage) Expire(key string, duration time.Duration) {
 	}
 }
 
-func (ms *MapStorage) checkExpiration (key string) {
-	if value, ok := ms.storage.Load(key); ok && value.(HashValue).ExpiresAt.Before(time.Now()){
+func (ms *MapStorage) checkExpiration(key string) {
+	if value, ok := ms.storage.Load(key); ok && value.(HashValue).ExpiresAt.Before(time.Now()) {
 		ms.storage.Delete(key)
 	}
 }
-

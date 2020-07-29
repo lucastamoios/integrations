@@ -15,17 +15,19 @@ func router(db storage.Database, cache storage.HashStorage) http.Handler {
 	handler := &Handler{cache, db}
 	e := gin.New()
 	e.Use(gin.Recovery())
-	authenticated := e.Group("integrations/api/v1/slack")
-	public := e.Group("integrations/api/v1/slack")
+	authenticated := e.Group(SLACK_INTEGRATION_ROUTE)
+	public := e.Group(SLACK_INTEGRATION_ROUTE)
 
 	// This authentication searches if the user is valid in the Toggl API
 	authenticated.Use(TogglAuthenticationRequired(cache))
 
 	authenticated.GET("/", handler.ListIntegrations)
 	authenticated.GET("/setup", handler.SetupSlackIntegration)
+	authenticated.GET("/rules", handler.ListSlackRules)
+	authenticated.POST("/rules", handler.CreateSlackRules)
 	// This is called as callback by external services, so it will not authenticate
 	//the user as we don't use any kind of session
-	public.GET("/callback", handler.CallbackSetupSlackIntegration)
+	public.GET(CALLBACK_SUBROUTE, handler.CallbackSetupSlackIntegration)
 
 	return e
 }

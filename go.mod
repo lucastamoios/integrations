@@ -9,4 +9,5 @@ require (
 	github.com/lib/pq v1.7.0
 	github.com/nleof/goyesql v1.0.1
 	github.com/slack-go/slack v0.6.5
+	google.golang.org/appengine v1.6.6 // indirect
 )

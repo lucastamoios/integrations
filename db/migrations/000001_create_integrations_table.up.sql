@@ -7,12 +7,14 @@ CREATE TABLE integrations (
     deleted_at TIMESTAMP
 );
 
-CREATE TABLE slack_emoji_rules (
-    slack_emoji_rules_id BIGSERIAL NOT NULL PRIMARY KEY,
+CREATE TABLE slack_rules (
+    slack_rules_id BIGSERIAL NOT NULL PRIMARY KEY,
     integration_id INTEGER REFERENCES integrations(integration_id),
     project VARCHAR(255),
     client VARCHAR(255),
     description VARCHAR(255),
     emoji VARCHAR(255) NOT NULL,
+    do_not_disturb BOOLEAN DEFAULT false,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP
 )

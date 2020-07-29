@@ -22,9 +22,10 @@ type Integration struct {
 	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
-type EmojiRule struct {
-	ProjectName string `db:"project"`
-	Emoji       string `db:"emoji"`
+type Rules struct {
+	ProjectName  string `db:"project"`
+	Emoji        string `db:"emoji"`
+	DoNotDisturb bool   `db:"do_not_disturb"`
 }
 
 func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
@@ -36,14 +37,14 @@ func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
 			break
 		}
 		for _, integration := range integrations {
-			var emojiRules []EmojiRule
-			err = db.Select(&emojiRules, "get-emoji-rules", integration.IntegrationID)
+			var slackRules []Rules
+			err = db.Select(&slackRules, "get-rules", integration.IntegrationID)
 			if err != nil {
 				log.Fatal("Database error: ", err)
 				break
 			}
 
-			err = updateStatus(integration, emojiRules)
+			err = updateStatus(integration, slackRules)
 			if err != nil && !errors.Is(err, toggl.TogglAPIError{}) {
 				log.Println(fmt.Errorf("failed to set slack status for integratin %d with error: %s", integration.IntegrationID, err.Error()))
 			}
@@ -54,7 +55,7 @@ func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
 	wg.Done()
 }
 
-func getEmojiForProject(rules []EmojiRule, projectName string) string {
+func getEmojiForProject(rules []Rules, projectName string) string {
 	for _, rule := range rules {
 		if strings.ToLower(rule.ProjectName) == strings.ToLower(projectName) {
 			return rule.Emoji
@@ -63,7 +64,7 @@ func getEmojiForProject(rules []EmojiRule, projectName string) string {
 	return ""
 }
 
-func updateStatus(integration Integration, rules []EmojiRule) error {
+func updateStatus(integration Integration, rules []Rules) error {
 	api := slack.New(integration.ServiceCredentials)
 	client := toggl.New(integration.TogglCredentials)
 

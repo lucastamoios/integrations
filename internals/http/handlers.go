@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -22,7 +24,13 @@ type Handler struct {
 	db    storage.Database
 }
 
-var slackCallback = "http://localhost:8080/integrations/api/v1/slack/callback"
+type StateInformation struct {
+	Token    string
+	ReturnTo string
+}
+
+var SLACK_INTEGRATION_ROUTE = "integrations/api/v1/slack"
+var CALLBACK_SUBROUTE = "callback"
 
 func (h *Handler) ListIntegrations(c *gin.Context) {
 	token, ok := c.Get("toggl_token")
@@ -56,18 +64,28 @@ func (h *Handler) SetupSlackIntegration(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	state := base64.URLEncoding.EncodeToString(temp)
-	token := strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Basic ")
 
-	h.cache.Set(state, token)
+	state := base64.URLEncoding.EncodeToString(temp)
+	returnTo := c.Query("return_to")
+	token := strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Basic ")
+	h.cache.Set(state, StateInformation{token, returnTo})
 	h.cache.Expire(state, 10*time.Minute)
 
 	clientID := os.Getenv("CLIENT_ID")
 	scope := "users.profile:write"
+	callbackURL, err := url.Parse(os.Getenv("HOST"))
+	if err != nil {
+		log.Fatal("failed parsing host")
+		c.JSON(http.StatusBadGateway, gin.H{"error": "an internal error occurred"})
+		c.Abort()
+		return
+	}
+	callbackURL.Path = path.Join(callbackURL.Path, SLACK_INTEGRATION_ROUTE, CALLBACK_SUBROUTE)
+
 	url := fmt.Sprintf("https://slack.com/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s&state=%s",
 		clientID,
 		scope,
-		slackCallback,
+		callbackURL.String(),
 		state)
 	c.Redirect(http.StatusFound, url)
 }
@@ -77,7 +95,7 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 	state := c.Query("state")
 
 	// If user already have this state we understand as he is the right user
-	token, ok := h.cache.Get(state)
+	stateInformation, ok := h.cache.Get(state)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "saved state is different from what was passed or it expired"})
 		c.Abort()
@@ -87,11 +105,18 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 
 	clientID := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")
-
+	callbackURL, err := url.Parse(os.Getenv("HOST"))
+	if err != nil {
+		log.Fatal("failed parsing host")
+		c.JSON(http.StatusBadGateway, gin.H{"error": "an internal error occurred"})
+		c.Abort()
+		return
+	}
+	callbackURL.Path = path.Join(callbackURL.Path, SLACK_INTEGRATION_ROUTE, CALLBACK_SUBROUTE)
 	url := fmt.Sprintf("https://slack.com/api/oauth.access?client_id=%s&client_secret=%s&redirect_uri=%s&code=%s",
 		clientID,
 		clientSecret,
-		slackCallback,
+		callbackURL.String(),
 		code)
 	unpacked, err := makeExternalRequest(url)
 	if err != nil {
@@ -101,15 +126,32 @@ func (h *Handler) CallbackSetupSlackIntegration(c *gin.Context) {
 		return
 	}
 
-	log.Println("starting query")
+	token := stateInformation.(StateInformation).Token
+	returnTo := stateInformation.(StateInformation).ReturnTo
 	_, err = h.db.Exec("create-integration", "toggl-slack-integration", token, unpacked["access_token"])
 	if err != nil {
 		log.Fatal("sql error: ", err)
 	}
-	log.Println(token)
-	// TODO Should redirect also
-	c.JSON(http.StatusOK, gin.H{})
+	c.Redirect(http.StatusFound, returnTo)
 
+}
+
+func (h *Handler) ListSlackRules(c *gin.Context) {
+	c.JSON(
+		http.StatusNotFound,
+		gin.H{
+			"error": "not implemented yet",
+		},
+	)
+}
+
+func (h *Handler) CreateSlackRules(c *gin.Context) {
+	c.JSON(
+		http.StatusNotFound,
+		gin.H{
+			"error": "not implemented yet",
+		},
+	)
 }
 
 func makeExternalRequest(url string) (map[string]interface{}, error) {
