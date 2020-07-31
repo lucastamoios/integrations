@@ -1,11 +1,12 @@
-BINARY := server
 DIST_FOLDER := dist
 IMAGE := lucastamoios/integrations
+MIGRATE_CMD := ./cmd/migrate
 
 .PHONY: db
 
 build:
-	go build -o $(DIST_FOLDER)/$(BINARY) ./internals/server.go
+	go build -o $(DIST_FOLDER)/migrate $(MIGRATE_CMD)
+	go build -o $(DIST_FOLDER)/server ./internals/server.go
 
 clean:
 	rm -rf $(DIST_FOLDER)
@@ -20,7 +21,7 @@ docker:
 	docker build -t $(IMAGE) .
 
 migrate:
-	docker-compose run --rm app go run ./cmd/migrate
+	docker-compose run --rm app go run $(MIGRATE_CMD)
 
 run:
 	docker-compose run --rm app
