@@ -12,3 +12,5 @@ WORKDIR /app
 
 COPY --from=builder /app/dist/* /app/
 COPY db/ /app/db/
+
+CMD /app/server

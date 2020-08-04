@@ -1,5 +1,5 @@
 DIST_FOLDER := dist
-IMAGE := lucastamoios/integrations
+IMAGE := gcr.io/experiments-283423/lucastamoios/integrations
 MIGRATE_CMD := ./cmd/migrate
 
 .PHONY: db
@@ -19,6 +19,9 @@ db-shell:
 
 docker:
 	docker build -t $(IMAGE) .
+
+docker-push:
+	docker push $(IMAGE)
 
 migrate:
 	docker-compose run --rm app go run $(MIGRATE_CMD)
