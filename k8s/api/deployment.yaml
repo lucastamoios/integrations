@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: gcr.io/experiments-283423/lucastamoios/integrations:latest
+          image: gcr.io/experiments-283423/lucastamoios/integrations:<VERSION>
           env:
             - name: CLIENT_ID
               valueFrom:
