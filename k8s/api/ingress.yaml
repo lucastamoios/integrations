@@ -1,0 +1,19 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: integrations-poc
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: integrations.myhro.net
+      http:
+        paths:
+          - backend:
+              serviceName: integrations-poc
+              servicePort: 8080
+  tls:
+    - hosts:
+        - integrations.myhro.net
+      secretName: integrations-poc-tls
