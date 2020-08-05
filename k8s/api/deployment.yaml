@@ -16,6 +16,16 @@ spec:
         - name: api
           image: gcr.io/experiments-283423/lucastamoios/integrations:latest
           env:
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: integrations-poc
+                  key: client-id
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: integrations-poc
+                  key: client-secret
             - name: GIN_MODE
               value: release
             - name: POSTGRES_CONN
