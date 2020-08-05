@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integrations-poc-postgres
+spec:
+  selector:
+    app: integrations-poc-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
