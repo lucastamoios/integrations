@@ -12,6 +12,14 @@ spec:
       labels:
         app: integrations-poc
     spec:
+      initContainers:
+        - name: migrate
+          image: gcr.io/experiments-283423/lucastamoios/integrations:<VERSION>
+          command:
+            - /app/migrate
+          env:
+            - name: POSTGRES_URL
+              value: postgres://postgres@integrations-poc-postgres/toggl_integrations?sslmode=disable
       containers:
         - name: api
           image: gcr.io/experiments-283423/lucastamoios/integrations:<VERSION>
