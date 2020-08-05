@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: integrations-poc-postgres
+spec:
+  selector:
+    matchLabels:
+      app: integrations-poc-postgres
+  serviceName: integrations-poc-postgres
+  template:
+    metadata:
+      labels:
+        app: integrations-poc-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:9.6
+          env:
+            - name: PGUSER
+              value: postgres
+            - name: POSTGRES_DB
+              value: toggl_integrations
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: data/
+      nodeSelector:
+        failure-domain.beta.kubernetes.io/zone: us-central1-b
+      volumes:
+        - name: data
+          gcePersistentDisk:
+            pdName: integrations-poc-postgres
+            fsType: ext4
