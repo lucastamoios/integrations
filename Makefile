@@ -18,6 +18,11 @@ db:
 db-shell:
 	docker-compose run --rm db psql
 
+deploy:
+	sed -i 's/<VERSION>/$(VERSION)/' k8s/api/deployment.yaml
+	kubectl apply -f k8s/api/
+	kubectl apply -f k8s/postgres/
+
 docker:
 	docker build -t $(IMAGE) .
 
