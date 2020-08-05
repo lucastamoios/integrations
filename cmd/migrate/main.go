@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	log.Print("Starting...")
+
 	dbURL := os.Getenv("POSTGRES_URL")
 	if dbURL == "" {
 		dbURL = "postgres://postgres@db/toggl_integrations?sslmode=disable"
@@ -22,7 +24,9 @@ func main() {
 	}
 
 	err = m.Up()
-	if err != nil {
+	if err != nil && err != migrate.ErrNoChange {
 		log.Fatal("m.Up error: ", err)
 	}
+
+	log.Print("Finished")
 }
