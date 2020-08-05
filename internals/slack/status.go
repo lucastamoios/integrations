@@ -29,9 +29,10 @@ type Rules struct {
 }
 
 func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
+	log.Println("starting Integration Runner")
 	for {
 		var integrations []Integration
-		err := db.Select(&integrations, "get-integrations")
+		err := db.Select(&integrations, "get-all-integrations")
 		if err != nil {
 			log.Fatal("Database error: ", err)
 			break
@@ -50,9 +51,9 @@ func IntegrationRunner(db storage.Database, wg sync.WaitGroup) {
 			}
 		}
 		time.Sleep(5 * time.Minute)
-		fmt.Println("Updated status")
 	}
 	wg.Done()
+	log.Println("leaving Integration Runner")
 }
 
 func getEmojiForProject(rules []Rules, projectName string) string {

@@ -35,11 +35,11 @@ func NewPostgresDatabase(queryFile string) (*Postgres, error) {
 }
 
 func (db *Postgres) Select(dest interface{}, query goyesql.Tag, args ...interface{}) error {
-	return db.DB.Select(dest, db.queries[query], args)
+	return db.DB.Select(dest, db.queries[query], args...)
 }
 
 func (db *Postgres) Exec(query goyesql.Tag, args ...interface{}) (int64, error) {
-	r, err := db.DB.Exec(db.queries[query], args)
+	r, err := db.DB.Exec(db.queries[query], args...)
 	if err != nil {
 		return 0, err
 	}

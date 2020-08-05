@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	log.Println("starting Integration Service...")
 	var wg sync.WaitGroup
 	db, err := storage.NewPostgresDatabase("db/queries.sql")
 	if err != nil {
@@ -19,5 +20,7 @@ func main() {
 	wg.Add(2) // Integration + server
 	go slack.IntegrationRunner(db, wg)
 	go http.ServerRunner(db, cache, wg)
+	log.Println("finished setting service up.")
 	wg.Wait()
+	log.Println("stopping service.")
 }

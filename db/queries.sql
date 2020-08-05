@@ -1,4 +1,4 @@
--- name: get-integrations
+-- name: get-all-integrations
 SELECT integration_id, toggl_credentials, service_credentials, created_at, deleted_at
 FROM integrations
 WHERE deleted_at IS NULL;
