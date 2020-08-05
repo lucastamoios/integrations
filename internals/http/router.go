@@ -15,6 +15,14 @@ func router(db storage.Database, cache storage.HashStorage) http.Handler {
 	handler := &Handler{cache, db}
 	e := gin.New()
 	e.Use(gin.Recovery())
+	e.GET("/status", func(c *gin.Context) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"status": "ok",
+			},
+		)
+	})
 	authenticated := e.Group(SLACK_INTEGRATION_ROUTE)
 	public := e.Group(SLACK_INTEGRATION_ROUTE)
 
