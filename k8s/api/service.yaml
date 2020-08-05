@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integrations-poc
+spec:
+  selector:
+    app: integrations-poc
+  ports:
+    - port: 8080
+      targetPort: 8080
