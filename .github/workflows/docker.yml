@@ -1,0 +1,13 @@
+---
+name: Docker
+"on": [push]
+jobs:
+  check:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          project_id: experiments-283423
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - run: gcloud info
