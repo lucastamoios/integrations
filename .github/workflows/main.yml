@@ -17,3 +17,17 @@ jobs:
         run: make docker
       - name: Push image
         run: make docker-push
+  deploy:
+    needs: build
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          project_id: experiments-283423
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - name: Configure Kubernetes access
+        run: gcloud container clusters get-credentials experiments-gke-cluster --region us-central1
+      - name: Deploy
+        run: make deploy
