@@ -1,0 +1,24 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integrations-poc
+spec:
+  selector:
+    matchLabels:
+      app: integrations-poc
+  template:
+    metadata:
+      labels:
+        app: integrations-poc
+    spec:
+      containers:
+        - name: api
+          image: gcr.io/experiments-283423/lucastamoios/integrations:latest
+          env:
+            - name: GIN_MODE
+              value: release
+            - name: POSTGRES_CONN
+              value: dbname=toggl_integrations host=integrations-poc-postgres sslmode=disable user=postgres
+          ports:
+            - containerPort: 8080
