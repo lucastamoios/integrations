@@ -1,6 +1,7 @@
 DIST_FOLDER := dist
 IMAGE := gcr.io/experiments-283423/lucastamoios/integrations
 MIGRATE_CMD := ./cmd/migrate
+VERSION ?= $(shell git rev-parse --short HEAD)
 
 .PHONY: db
 
@@ -21,7 +22,9 @@ docker:
 	docker build -t $(IMAGE) .
 
 docker-push:
-	docker push $(IMAGE)
+	docker tag $(IMAGE):latest $(IMAGE):$(VERSION)
+	docker push $(IMAGE):$(VERSION)
+	docker push $(IMAGE):latest
 
 migrate:
 	docker-compose run --rm app go run $(MIGRATE_CMD)
