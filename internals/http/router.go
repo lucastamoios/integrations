@@ -19,7 +19,7 @@ func router(db storage.Database, cache storage.HashStorage) http.Handler {
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"status": "ok",
+				"status": "Hello Toggl Team!",
 			},
 		)
 	})
